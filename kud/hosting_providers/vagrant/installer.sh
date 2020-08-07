@@ -253,8 +253,8 @@ sudo find /etc/apt/sources.list.d -maxdepth 1 -name '*jonathonf*' -delete || tru
 sudo apt-get update
 install_k8s
 _set_environment_file
-install_addons
-if ${KUD_PLUGIN_ENABLED:-false}; then
-    install_plugin
-fi
+# install_addons
+# if ${KUD_PLUGIN_ENABLED:-false}; then
+#     install_plugin
+# fi
 _print_kubernetes_info
