@@ -3,7 +3,7 @@
 
 Vagrant.configure("2") do |config|
   config.vm.box = "generic/ubuntu1804"
-  config.vm.hostname = "ubuntu18"
+  config.vm.hostname = "cluster-101"
   if File.exists?(".vagrant/machines/default/libvirt/action_provision")
     config.vm.synced_folder "/home/tmalsbar/multicloud-k8s", "/vagrant"
   else
