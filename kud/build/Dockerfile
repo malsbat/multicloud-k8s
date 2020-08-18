@@ -10,6 +10,7 @@ ENV NO_PROXY=$NO_PROXY
 ENV KUD_ENABLE_TESTS=$KUD_ENABLE_TESTS
 ENV KUD_PLUGIN_ENABLED=$KUD_PLUGIN_ENABLED
 ADD . /usr/src/multicloud-k8s
+RUN /usr/src/multicloud-k8s/kud/build/acquire-apt-proxy.sh
 USER root
 SHELL ["/bin/bash", "-c"]
 WORKDIR /usr/src/multicloud-k8s/kud/hosting_providers/containerized
