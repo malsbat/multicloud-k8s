@@ -1,6 +1,12 @@
 FROM ubuntu:18.04 as base
 ARG KUD_ENABLE_TESTS=false
 ARG KUD_PLUGIN_ENABLED=false
+ENV http_proxy=$http_proxy
+ENV HTTP_PROXY=$HTTP_PROXY
+ENV https_proxy=$https_proxy
+ENV HTTPS_PROXY=$HTTPS_PROXY
+ENV no_proxy=$no_proxy
+ENV NO_PROXY=$NO_PROXY
 ENV KUD_ENABLE_TESTS=$KUD_ENABLE_TESTS
 ENV KUD_PLUGIN_ENABLED=$KUD_PLUGIN_ENABLED
 ADD . /usr/src/multicloud-k8s
