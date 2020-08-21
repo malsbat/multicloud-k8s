@@ -19,6 +19,10 @@
       get_url:
         url: https://packages.wand.net.nz/keyring.gpg
         dest: /etc/apt/trusted.gpg.d/wand.gpg
+      environment:
+        http_proxy: "{{ lookup('env','http_proxy') }}"
+        https_proxy: "{{ lookup('env','https_proxy') }}"
+        no_proxy: "{{ lookup('env','no_proxy') }}"
     - name: add WAND Debian Repo
       apt_repository:
         repo: "deb https://packages.wand.net.nz {{ ansible_lsb.codename }} ovs-2.10"
