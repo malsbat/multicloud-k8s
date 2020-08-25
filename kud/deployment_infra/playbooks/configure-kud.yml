@@ -7,6 +7,21 @@
 # which accompanies this distribution, and is available at
 # http://www.apache.org/licenses/LICENSE-2.0
 ##############################################################################
+- hosts: all
+  pre_tasks:
+    - name: Load kud variables
+      include_vars:
+        file: kud-vars.yml
+    - name: Create docker client config directory
+      file:
+        path: ~/.docker
+        state: directory
+    - name: Configure docker client proxies
+      template:
+        src: docker_config.j2
+        dest: ~/.docker/config.json
+        force: no
+
 - hosts: localhost
   pre_tasks:
     - name: Load kud variables
