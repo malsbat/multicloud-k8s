@@ -212,6 +212,7 @@
         url: "{{ criproxy_url }}"
         dest: "{{ criproxy_dest }}/criproxy"
       when: criproxy_source_type == "binary"
+      environment: "{{ proxy_env }}"
     - name: set criproxy execution permissions
       become: yes
       file:

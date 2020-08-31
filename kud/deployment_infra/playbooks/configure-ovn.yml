@@ -9,6 +9,10 @@
 ##############################################################################
 - hosts: ovn-central:ovn-controller
   become: yes
+  pre_tasks:
+    - name: Load kud variables
+      include_vars:
+        file: kud-vars.yml
   tasks:
     - name: Load distribution variables
       include_vars:
@@ -19,6 +23,7 @@
       get_url:
         url: https://packages.wand.net.nz/keyring.gpg
         dest: /etc/apt/trusted.gpg.d/wand.gpg
+      environment: "{{ proxy_env }}"
     - name: add WAND Debian Repo
       apt_repository:
         repo: "deb https://packages.wand.net.nz {{ ansible_lsb.codename }} ovs-2.10"

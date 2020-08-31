@@ -26,6 +26,7 @@
       command: git clone {{ cmk_git_url }} -b {{ cmk_version }}
       args:
         chdir: "{{ cmk_dir }}"
+      environment: "{{ proxy_env }}"
 
     - name: read current CMK version
       command: echo v1.4.1
@@ -37,6 +38,7 @@
       command: make
       args:
         chdir: "{{ cmk_dir }}/CPU-Manager-for-Kubernetes"
+      environment: "{{ proxy_env }}"
 
     - name: tag CMK image
       command: docker tag cmk:{{ cmk_img_version.stdout }} {{ registry_local_address }}/cmk:{{ cmk_img_version.stdout }}
