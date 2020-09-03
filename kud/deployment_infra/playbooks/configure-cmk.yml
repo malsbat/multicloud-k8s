@@ -45,6 +45,7 @@
 
     - name: install CMK components
       command: "/usr/local/bin/kubectl create -f {{ playbook_dir }}/../images/cmk-{{ cmk_install_host }}.yaml"
+      environment: "{{ proxy_env }}"
 
     - name: wait for all cmk daemonset pods to be running
       shell: kubectl get pods -n {{ cmk_namespace }} -l name=cmk -o jsonpath={.items[*].status.phase}
@@ -53,6 +54,7 @@
       retries: 50
       delay: 5
       failed_when: false
+      environment: "{{ proxy_env }}"
 
     - name: create a script to check CMK setup
       copy:
@@ -68,6 +70,7 @@
                  echo not found
               done
             echo "cmk-nodereport is effective"
+      environment: "{{ proxy_env }}"
 
     - name: judge the runtime environment
       set_fact:
@@ -88,6 +91,7 @@
 
     - name: Run the script and re-evaluate the variable.
       command: "./cmk-check.sh"
+      environment: "{{ proxy_env }}"
 
     - name: Clean the script and folder.
       file:
@@ -103,5 +107,6 @@
         - cmk_untaint_required
       with_items:
         - "{{ cmk_hosts_list }}"
+      environment: "{{ proxy_env }}"
     - debug:
         var: untaint_result

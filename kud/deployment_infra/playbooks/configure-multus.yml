@@ -8,6 +8,11 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 ##############################################################################
 - hosts: localhost
+  pre_tasks:
+    - name: Load kud variables
+      include_vars:
+        file: kud-vars.yml
   tasks:
     - name: Apply Multus Daemonset
       shell: "/usr/local/bin/kubectl apply -f {{ playbook_dir }}/../images/multus-daemonset.yml"
+      environment: "{{ proxy_env }}"

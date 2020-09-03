@@ -25,6 +25,7 @@
     - name: apply virtlet extraRuntime label
       command: "/usr/local/bin/kubectl label node {{ item }} extraRuntime=virtlet --overwrite"
       with_inventory_hostnames: virtlet
+      environment: "{{ proxy_env }}"
     - name: create image translations confimap file
       blockinfile:
         path: "{{ images_file }}"
@@ -49,6 +50,7 @@
     - name: install image translations configmap
       shell: "/usr/local/bin/kubectl create configmap -n kube-system virtlet-image-translations --from-file {{ images_file }} --dry-run -o yaml | /usr/local/bin/kubectl apply -f -"
       ignore_errors: True
+      environment: "{{ proxy_env }}"
     - name: create Virtlet folder
       file:
         state: directory
@@ -131,6 +133,7 @@
     - name: create Virtlet k8s objects
       shell: "/usr/local/bin/kubectl virt gen | /usr/local/bin/kubectl apply -f -"
       ignore_errors: True
+      environment: "{{ proxy_env }}"
     - name: wait for Virtlet daemonset
       shell: "/usr/local/bin/kubectl get ds virtlet -n=kube-system -o=jsonpath --template={.status.numberReady}"
       register: daemonset
@@ -138,6 +141,7 @@
         - '1'
       retries: 6
       delay: 10
+      environment: "{{ proxy_env }}"
 
 - hosts: virtlet
   tasks:

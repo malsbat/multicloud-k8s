@@ -8,8 +8,14 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 ##############################################################################
 - hosts: localhost
+  pre_tasks:
+    - name: Load kud variables
+      include_vars:
+        file: kud-vars.yml
   tasks:
     - name: Apply NFD Master Daemonset
       command: "/usr/local/bin/kubectl apply -f {{ playbook_dir }}/../images/nfd-master.yaml"
+      environment: "{{ proxy_env }}"
     - name: Apply NFD Worker Daemonset
       command: "/usr/local/bin/kubectl apply -f {{ playbook_dir }}/../images/nfd-worker.yaml"
+      environment: "{{ proxy_env }}"

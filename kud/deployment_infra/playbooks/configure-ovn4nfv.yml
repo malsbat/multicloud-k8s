@@ -35,15 +35,19 @@
     - name: create network objects
       shell: "/usr/local/bin/kubectl apply -f /tmp/ovn4nfvnetwork.yml"
       ignore_errors: True
+      environment: "{{ proxy_env }}"
 
     - name: create operator namespace
       shell: "/usr/local/bin/kubectl create namespace operator"
       ignore_errors: True
+      environment: "{{ proxy_env }}"
 
     - name: apply nfn operator label
       command: "/usr/local/bin/kubectl label node {{ item }} nfnType=operator --overwrite"
       with_inventory_hostnames: ovn-central
+      environment: "{{ proxy_env }}"
 
     - name: Apply NFN operator, operator roles, CRD's and ovn4nfv Daemonset
       shell: "/usr/local/bin/kubectl apply -f {{ playbook_dir }}/../images/nfn.yml"
       ignore_errors: True
+      environment: "{{ proxy_env }}"
