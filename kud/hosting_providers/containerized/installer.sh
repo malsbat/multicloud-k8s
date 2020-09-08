@@ -79,6 +79,17 @@ function install_kubespray {
     fi
 }
 
+function list_add_unique {
+    echo -n "$*" | tr ' ' ',' | awk -v RS=, '!seen[$0]++{print $0}' | paste -s -d,
+}
+
+function add_inventory_to_environment {
+    key="$1"
+    ansible_hosts=$(list_add_unique $(ansible -i $kud_inventory all -m setup | sed -ne "s/.*\"$key\": \+\"\([^\"]\+\)\".*/\1/p" | paste -s -d,) "")
+    hosts=$(sed -ne "s/.*$key=\"\?\([^\"]\+\)\"\?/\1/p" /etc/environment)
+    sed -i "/$key=/{h;s/=.*/=\"$(list_add_unique $ansible_hosts $hosts)\"/};\${x;/^\$/{s//$key=\"$ansible_hosts\"/;H};x}" /etc/environment
+}
+
 function install_k8s {
     version=$(grep "kubespray_version" ${kud_playbooks}/kud-vars.yml | \
         awk -F ': ' '{print $2}')
@@ -99,6 +110,9 @@ function install_k8s {
 
     cp -rf $kud_inventory_folder/artifacts \
         /opt/kud/multi-cluster/$cluster_name/
+
+    add_inventory_to_environment "no_proxy"
+    add_inventory_to_environment "NO_PROXY"
 }
 
 # install_addons() - Install Kubenertes AddOns
