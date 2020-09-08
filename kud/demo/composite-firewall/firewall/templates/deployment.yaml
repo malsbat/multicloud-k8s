@@ -31,6 +31,7 @@ spec:
             lock_passwd: false
             passwd: "$6$rounds=4096$QA5OCKHTE41$jRACivoPMJcOjLRgxl3t.AMfU7LhCFwOWv2z66CQX.TSxBy50JoYtycJXSPr2JceG.8Tq/82QN9QYt3euYEZW/"
           runcmd:
+            - export $(xargs </etc/cloud/environment)
             - export demo_artifacts_version={{ .Values.global.demoArtifactsVersion }}
             - export vfw_private_ip_0={{ .Values.global.vfwPrivateIp0 }}
             - export vsn_private_ip_0={{ .Values.global.vsnPrivateIp0 }}
@@ -54,6 +55,10 @@ spec:
                 - virtlet
       containers:
       - name: {{ .Chart.Name }}
+        envFrom:
+        - configMapRef:
+            name: proxies
+            optional: true
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         tty: true
