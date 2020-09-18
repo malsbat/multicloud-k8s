@@ -18,6 +18,7 @@
       git:
         repo: 'https://github.com/onap/multicloud-k8s.git'
         dest: /opt/multicloud
+      environment: "{{ proxy_env }}"
 
     - name: install make package for ubuntu systems
       apt: name=make state=present update_cache=yes
