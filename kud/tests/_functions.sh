@@ -199,7 +199,7 @@ function wait_deployment {
             echo "$(date +%H:%M:%S) - $deployment_name : $new_phase"
             status_phase=$new_phase
         fi
-        if [[ $new_phase == "Err"* ]]; then
+        if [[ $new_phase =~ "Err" ]]; then
             exit 1
         fi
     done
@@ -219,7 +219,7 @@ function wait_for_pod {
             echo "$(date +%H:%M:%S) - Filter=[$*] : $new_phase"
             status_phase="$new_phase"
         fi
-        if [[ "$new_phase" == "Err"* ]]; then
+        if [[ "$new_phase" =~ "Err" ]]; then
             exit 1
         fi
     done
