@@ -122,7 +122,7 @@ function install_addons {
         tee $cluster_log/setup-kud.log
     # The order of KUD_ADDONS is important: some plugins (sriov, qat)
     # require nfd to be enabled.
-    for addon in ${KUD_ADDONS:-virtlet ovn4nfv nfd sriov cmk $plugins_name}; do
+    for addon in ${KUD_ADDONS:-virtlet ovn4nfv nfd sriov qat cmk $plugins_name}; do
         echo "Deploying $addon using configure-$addon.yml playbook.."
         ansible-playbook $verbose -i \
             $kud_inventory $kud_playbooks/configure-${addon}.yml | \
@@ -132,7 +132,7 @@ function install_addons {
     echo "Run the test cases if testing_enabled is set to true."
     if [[ "${testing_enabled}" == "true" ]]; then
         failed_kud_tests=""
-        for addon in ${KUD_ADDONS:-virtlet ovn4nfv nfd sriov cmk $plugins_name}; do
+        for addon in ${KUD_ADDONS:-virtlet ovn4nfv nfd sriov qat cmk $plugins_name}; do
             pushd $kud_tests
             bash ${addon}.sh || failed_kud_tests="${failed_kud_tests} ${addon}"
             case $addon in
