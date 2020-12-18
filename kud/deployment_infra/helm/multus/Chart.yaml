@@ -1,0 +1,6 @@
+apiVersion: v2
+name: multus
+description: A CNI plugin for Kubernetes that enables attaching multiple network interfaces to pods
+type: application
+version: 0.1.0
+appVersion: v3.4.1-tp

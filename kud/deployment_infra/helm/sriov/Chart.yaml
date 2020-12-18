@@ -1,0 +1,10 @@
+apiVersion: v2
+name: sriov
+description: A Kubernetes add-on for enabling SR-IOV
+type: application
+version: 0.1.0
+appVersion: 3.7.34
+dependencies:
+  - name: multus
+    version: ~0.x-0
+    repository: '@kud'

@@ -1,0 +1,41 @@
+apiVersion: v1
+entries:
+  multus:
+  - apiVersion: v2
+    appVersion: v3.4.1-tp
+    created: "2020-12-18T01:17:24.7917514Z"
+    description: A CNI plugin for Kubernetes that enables attaching multiple network
+      interfaces to pods
+    digest: c1683535572d6d124e4cd956bd2e7795e199b95eb717d4a8c49329d6502d09d7
+    name: multus
+    type: application
+    urls:
+    - multus-0.1.0.tgz
+    version: 0.1.0
+  nfd:
+  - apiVersion: v2
+    appVersion: v0.4.0
+    created: "2020-12-18T01:17:24.792429381Z"
+    description: A Kubernetes add-on for detecting hardware features and system configuration
+    digest: a83a2b487a7835cc3d9f1c7f1caf3d95baad9341c29c5b269cf5ced57e2abc2f
+    name: nfd
+    type: application
+    urls:
+    - nfd-0.1.0.tgz
+    version: 0.1.0
+  sriov:
+  - apiVersion: v2
+    appVersion: 3.7.34
+    created: "2020-12-18T01:17:24.793541508Z"
+    dependencies:
+    - name: multus
+      repository: '@kud'
+      version: ~0.x-0
+    description: A Kubernetes add-on for enabling SR-IOV
+    digest: 39513224352032202165a14e203d8fe138eeed0d2ca58c8376dfe4bd47e750a9
+    name: sriov
+    type: application
+    urls:
+    - sriov-0.1.0.tgz
+    version: 0.1.0
+generated: "2020-12-18T01:17:24.79088734Z"

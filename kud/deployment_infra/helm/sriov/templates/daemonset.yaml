@@ -1,0 +1,166 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: iavf-driver-installer
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      name: iavf-driver-installer
+  template:
+    metadata:
+      labels:
+        name: iavf-driver-installer
+    spec:
+      hostNetwork: true
+      hostPID: true
+      volumes:
+      - name: iavf-install-dir-host
+        hostPath:
+          path: /opt/iavf
+      - name: root-mount
+        hostPath:
+          path: /
+      initContainers:
+      - image: malsbat/iavf-driver-installer:latest
+        imagePullPolicy: IfNotPresent
+        name: iavf-driver-installer
+        securityContext:
+          privileged: true
+        env:
+          - name: IAVF_INSTALL_DIR_HOST
+            value: /opt/iavf
+          - name: IAVF_INSTALL_DIR_CONTAINER
+            value: /usr/local/iavf
+          - name: ROOT_MOUNT_DIR
+            value: /root
+        volumeMounts:
+        - name: iavf-install-dir-host
+          mountPath: /usr/local/iavf
+        - name: root-mount
+          mountPath: /root
+      containers:
+      - image: "gcr.io/google-containers/pause:2.0"
+        name: pause
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kube-sriov-cni-ds-amd64
+  namespace: kube-system
+  labels:
+    tier: node
+    app: sriov-cni
+spec:
+  selector:
+    matchLabels:
+      tier: node
+      app: sriov-cni
+  template:
+    metadata:
+      labels:
+        tier: node
+        app: sriov-cni
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: feature.node.kubernetes.io/network-sriov.capable
+                operator: In
+                values:
+                - "true"
+      hostNetwork: true
+      nodeSelector:
+        beta.kubernetes.io/arch: amd64
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - name: kube-sriov-cni
+        image: nfvpe/sriov-cni
+        securityContext:
+          privileged: true
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "50Mi"
+          limits:
+            cpu: "100m"
+            memory: "50Mi"
+        volumeMounts:
+        - name: cnibin
+          mountPath: /host/opt/cni/bin
+      volumes:
+        - name: cnibin
+          hostPath:
+            path: /opt/cni/bin
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kube-sriov-device-plugin-amd64
+  namespace: kube-system
+  labels:
+    tier: node
+    app: sriovdp
+spec:
+  selector:
+    matchLabels:
+      tier: node
+      app: sriovdp
+  template:
+    metadata:
+      labels:
+        tier: node
+        app: sriovdp
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: feature.node.kubernetes.io/network-sriov.capable
+                operator: In
+                values:
+                - "true"
+      hostNetwork: true
+      hostPID: true
+      nodeSelector:
+        beta.kubernetes.io/arch: amd64
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      serviceAccountName: sriov-device-plugin
+      containers:
+      - name: kube-sriovdp
+        image: nfvpe/sriov-device-plugin
+        args:
+        - --log-dir=sriovdp
+        - --log-level=10
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: devicesock
+          mountPath: /var/lib/kubelet/
+          readOnly: false
+        - name: log
+          mountPath: /var/log
+        - name: config-volume
+          mountPath: /etc/pcidp
+      volumes:
+        - name: devicesock
+          hostPath:
+            path: /var/lib/kubelet/
+        - name: log
+          hostPath:
+            path: /var/log
+        - name: config-volume
+          configMap:
+            name: sriovdp-config
+            items:
+            - key: config.json
+              path: config.json
