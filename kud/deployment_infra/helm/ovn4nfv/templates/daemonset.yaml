@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ovn4nfv-cni
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: ovn4nfv
+spec:
+  selector:
+    matchLabels:
+      app: ovn4nfv
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: ovn4nfv
+    spec:
+      hostNetwork: true
+      nodeSelector:
+        beta.kubernetes.io/arch: amd64
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      containers:
+      - name: ovn4nfv
+        image: integratedcloudnative/ovn4nfv-k8s-plugin:0.9.0
+        imagePullPolicy: IfNotPresent
+        command: ["/usr/local/bin/entrypoint", "cni"]
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "50Mi"
+          limits:
+            cpu: "100m"
+            memory: "50Mi"
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: cnibin
+          mountPath: /host/opt/cni/bin
+        - name: cniconf
+          mountPath: /host/etc/openvswitch
+        - name: ovn4nfv-cfg
+          mountPath: /tmp/ovn4nfv-conf
+      volumes:
+        - name: cnibin
+          hostPath:
+            path: /opt/cni/bin
+        - name: cniconf
+          hostPath:
+            path: /etc/openvswitch
+        - name: ovn4nfv-cfg
+          configMap:
+            name: ovn4nfv-cni-config
+            items:
+            - key: ovn4nfv_k8s.conf
+              path: ovn4nfv_k8s.conf
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nfn-agent
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nfn-agent
+spec:
+  selector:
+    matchLabels:
+      app: nfn-agent
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: nfn-agent
+    spec:
+      hostNetwork: true
+      nodeSelector:
+        beta.kubernetes.io/arch: amd64
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      containers:
+      - name: nfn-agent
+        image: integratedcloudnative/ovn4nfv-k8s-plugin:0.9.0
+        imagePullPolicy: IfNotPresent
+        command: ["/usr/local/bin/entrypoint", "agent"]
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "50Mi"
+          limits:
+            cpu: "100m"
+            memory: "50Mi"
+        env:
+          - name: NFN_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /run/openvswitch
+          name: host-run-ovs
+        - mountPath: /var/run/openvswitch
+          name: host-var-run-ovs
+      volumes:
+      - name: host-run-ovs
+        hostPath:
+          path: /run/openvswitch
+      - name: host-var-run-ovs
+        hostPath:
+          path: /var/run/openvswitch

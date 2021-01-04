@@ -1,0 +1,19 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: ovn4nfv-cni-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: ovn4nfv
+data:
+  ovn4nfv_k8s.conf: |
+          [logging]
+          loglevel=5
+          logfile=/var/log/openvswitch/ovn4k8s.log
+
+          [cni]
+          conf-dir=/etc/cni/net.d
+          plugin=ovn4nfvk8s-cni
+
+          [kubernetes]
+          kubeconfig=/etc/kubernetes/admin.conf

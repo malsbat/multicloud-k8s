@@ -1,0 +1,10 @@
+apiVersion: v2
+name: ovn4nfv
+description: OVN4NFV Kubernetes plugin
+type: application
+version: 0.1.0
+appVersion: 0.9.0
+dependencies:
+  - name: multus
+    version: ~0.x-0
+    repository: '@kud'

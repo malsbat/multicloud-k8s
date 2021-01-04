@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfn-operator
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: nfn-operator
+  template:
+    metadata:
+      labels:
+        name: nfn-operator
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nfnType
+                operator: In
+                values:
+                - operator
+      tolerations:
+       - key: "node-role.kubernetes.io/master"
+         effect: "NoSchedule"
+         operator: "Exists"
+      serviceAccountName: k8s-nfn-sa
+      containers:
+        - name: nfn-operator
+          image: integratedcloudnative/ovn4nfv-k8s-plugin:0.9.0
+          command: ["/usr/local/bin/entrypoint", "operator"]
+          imagePullPolicy: IfNotPresent
+          ports:
+          - containerPort: 50000
+            protocol: TCP
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "nfn-operator"
