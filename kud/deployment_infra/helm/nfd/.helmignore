@@ -1,7 +1,10 @@
 # Patterns to ignore when building packages.
 # This supports shell glob matching, relative path matching, and
 # negation (prefixed with !). Only one pattern per line.
+Dockerfile
+Makefile
 .DS_Store
+test.sh
 # Common VCS dirs
 .git/
 .gitignore
