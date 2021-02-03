@@ -11,7 +11,7 @@
 set -o nounset
 set -o pipefail
 
-vagrant_version=2.2.4
+vagrant_version=2.2.14
 if ! vagrant version &>/dev/null; then
     enable_vagrant_install=true
 else
@@ -94,7 +94,6 @@ case ${ID,,} in
     ;;
 
     ubuntu|debian)
-    libvirt_group="libvirtd"
     INSTALLER_CMD="sudo -H -E apt-get -y -q=3 install"
     packages+=(python-dev)
 
