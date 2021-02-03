@@ -1,4 +1,3 @@
-# Refernce NFD Master DaemonSet - https://github.com/kubernetes-sigs/node-feature-discovery/blob/master/nfd-master.yaml.template
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -19,10 +18,15 @@ rules:
   - ""
   resources:
   - nodes
+# when using command line flag --resource-labels to create extended resources
+# you will need to uncomment "- nodes/status"
+# - nodes/status
   verbs:
   - get
   - patch
   - update
+  # List only needed for --prune
+  - list
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -37,31 +41,15 @@ subjects:
   name: nfd-master
   namespace: node-feature-discovery
 ---
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: psp:default:privileged
-  namespace: node-feature-discovery
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: psp:privileged
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: node-feature-discovery
-- kind: ServiceAccount
-  name: nfd-master
-  namespace: node-feature-discovery
----
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
   labels:
     app: nfd-master
   name: nfd-master
   namespace: node-feature-discovery
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: nfd-master
@@ -71,8 +59,15 @@ spec:
         app: nfd-master
     spec:
       serviceAccount: nfd-master
-      nodeSelector:
-        node-role.kubernetes.io/master: ""
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: "node-role.kubernetes.io/master"
+                    operator: In
+                    values: [""]
       tolerations:
         - key: "node-role.kubernetes.io/master"
           operator: "Equal"
@@ -84,10 +79,41 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-          image: quay.io/kubernetes_incubator/node-feature-discovery:v0.4.0
+          image: gcr.io/k8s-staging-nfd/node-feature-discovery:master
           name: nfd-master
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
           command:
             - "nfd-master"
+## Enable TLS authentication
+## The example below assumes having the root certificate named ca.crt stored in
+## a ConfigMap named nfd-ca-cert, and, the TLS authentication credentials stored
+## in a TLS Secret named nfd-master-cert.
+## Additional hardening can be enabled by specifying --verify-node-name in
+## args, in which case every nfd-worker requires a individual node-specific
+## TLS certificate.
+#          args:
+#            - "--ca-file=/etc/kubernetes/node-feature-discovery/trust/ca.crt"
+#            - "--key-file=/etc/kubernetes/node-feature-discovery/certs/tls.key"
+#            - "--cert-file=/etc/kubernetes/node-feature-discovery/certs/tls.crt"
+#          volumeMounts:
+#            - name: nfd-ca-cert
+#              mountPath: "/etc/kubernetes/node-feature-discovery/trust"
+#              readOnly: true
+#            - name: nfd-master-cert
+#              mountPath: "/etc/kubernetes/node-feature-discovery/certs"
+#              readOnly: true
+#      volumes:
+#        - name: nfd-ca-cert
+#          configMap:
+#            name: nfd-ca-cert
+#        - name: nfd-master-cert
+#          secret:
+#            secretName: nfd-master-cert
 ---
 apiVersion: v1
 kind: Service
