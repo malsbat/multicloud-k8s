@@ -23,6 +23,19 @@ spec:
             networks. More information available at: https://github.com/k8snetworkplumbingwg/multi-net-spec'
           type: object
           properties:
+            apiVersion:
+              description: 'APIVersion defines the versioned schema of this represen
+                tation of an object. Servers should convert recognized schemas to the
+                latest internal value, and may reject unrecognized values. More info:
+                https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              type: string
+            kind:
+              description: 'Kind is a string value representing the REST resource this
+                object represents. Servers may infer this from the endpoint the client
+                submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              type: string
+            metadata:
+              type: object
             spec:
               description: 'NetworkAttachmentDefinition spec defines the desired state of a network attachment'
               type: object
@@ -105,7 +118,7 @@ data:
       "delegates": [
         {
           "cniVersion": "0.3.1",
-          "name": "cni0",
+          "name": "default-cni-network",
           "plugins": [
             {
               "type": "flannel",
@@ -158,7 +171,7 @@ spec:
       serviceAccountName: multus
       containers:
       - name: kube-multus
-        image: integratedcloudnative/multus:v3.4.1-tp
+        image: docker.io/nfvpe/multus:stable
         command: ["/entrypoint.sh"]
         args:
         - "--multus-conf-file=auto"
@@ -179,6 +192,142 @@ spec:
           mountPath: /host/opt/cni/bin
         - name: multus-cfg
           mountPath: /tmp/multus-conf
+      terminationGracePeriodSeconds: 10
+      volumes:
+        - name: cni
+          hostPath:
+            path: /etc/cni/net.d
+        - name: cnibin
+          hostPath:
+            path: /opt/cni/bin
+        - name: multus-cfg
+          configMap:
+            name: multus-cni-config
+            items:
+            - key: cni-conf.json
+              path: 70-multus.conf
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kube-multus-ds-ppc64le
+  namespace: kube-system
+  labels:
+    tier: node
+    app: multus
+    name: multus
+spec:
+  selector:
+    matchLabels:
+      name: multus
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        tier: node
+        app: multus
+        name: multus
+    spec:
+      hostNetwork: true
+      nodeSelector:
+        kubernetes.io/arch: ppc64le
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      serviceAccountName: multus
+      containers:
+      - name: kube-multus
+        # ppc64le support requires multus:latest for now. support 3.3 or later.
+        image: docker.io/nfvpe/multus:stable-ppc64le
+        command: ["/entrypoint.sh"]
+        args:
+        - "--multus-conf-file=auto"
+        - "--cni-version=0.3.1"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "90Mi"
+          limits:
+            cpu: "100m"
+            memory: "90Mi"
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: cni
+          mountPath: /host/etc/cni/net.d
+        - name: cnibin
+          mountPath: /host/opt/cni/bin
+        - name: multus-cfg
+          mountPath: /tmp/multus-conf
+      terminationGracePeriodSeconds: 10
+      volumes:
+        - name: cni
+          hostPath:
+            path: /etc/cni/net.d
+        - name: cnibin
+          hostPath:
+            path: /opt/cni/bin
+        - name: multus-cfg
+          configMap:
+            name: multus-cni-config
+            items:
+            - key: cni-conf.json
+              path: 70-multus.conf
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kube-multus-ds-arm64v8
+  namespace: kube-system
+  labels:
+    tier: node
+    app: multus
+    name: multus
+spec:
+  selector:
+    matchLabels:
+      name: multus
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        tier: node
+        app: multus
+        name: multus
+    spec:
+      hostNetwork: true
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      serviceAccountName: multus
+      containers:
+      - name: kube-multus
+        image: docker.io/nfvpe/multus:stable-arm64v8
+        command: ["/entrypoint.sh"]
+        args:
+        - "--multus-conf-file=auto"
+        - "--cni-version=0.3.1"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "90Mi"
+          limits:
+            cpu: "100m"
+            memory: "90Mi"
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: cni
+          mountPath: /host/etc/cni/net.d
+        - name: cnibin
+          mountPath: /host/opt/cni/bin
+        - name: multus-cfg
+          mountPath: /tmp/multus-conf
+      terminationGracePeriodSeconds: 10
       volumes:
         - name: cni
           hostPath:
