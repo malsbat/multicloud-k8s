@@ -13,6 +13,23 @@ spec:
       labels:
         app: intel-qat-kernel-plugin
     spec:
+      hostPID: true
+      initContainers:
+      - image: malsbat/qat-driver-installer:latest
+        imagePullPolicy: IfNotPresent
+        name: qat-driver-installer
+        securityContext:
+          privileged: true
+        env:
+          - name: QAT_INSTALL_DIR_HOST
+            value: /opt/qat
+          - name: QAT_INSTALL_DIR_CONTAINER
+            value: /usr/local/qat
+        volumeMounts:
+        - name: root-mount
+          mountPath: /root
+        - name: qat-install-dir
+          mountPath: /usr/local/qat
       containers:
       - name: intel-qat-kernel-plugin
         securityContext:
@@ -39,3 +56,9 @@ spec:
       - name: devfs
         hostPath:
           path: /dev
+      - name: root-mount
+        hostPath:
+          path: /
+      - name: qat-install-dir
+        hostPath:
+          path: /opt/qat
