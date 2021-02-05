@@ -136,3 +136,23 @@ configure_kernel_src() {
     # fi
     # ln -s "${KERNEL_SRC_DIR}" "${modules_build_dir}"
 }
+
+main() {
+    load_etc_os_release
+    local -r cmd="${1:-install}"
+    # A caller of main must define the functions called below
+    case $cmd in
+        install)
+            if ! check_cached_version; then
+                upgrade_driver
+                update_cached_version
+            fi
+            if ! check_driver_started; then
+                start_driver
+            fi
+            ;;
+        uninstall)
+            uninstall_driver
+            ;;
+    esac
+}

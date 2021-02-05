@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -x
+#set -x
 source _common.sh
 
 QAT_DRIVER_VERSION="${QAT_DRIVER_VERSION:-1.7.l.4.6.0-00025}"
@@ -21,6 +21,7 @@ QAT_DRIVER_DOWNLOAD_URL="${QAT_DRIVER_DOWNLOAD_URL:-$QAT_DRIVER_DOWNLOAD_URL_DEF
 QAT_INSTALL_DIR_HOST="${QAT_INSTALL_DIR_HOST:-/opt/qat}"
 QAT_INSTALL_DIR_CONTAINER="${QAT_INSTALL_DIR_CONTAINER:-/usr/local/qat}"
 QAT_DRIVER_ARCHIVE="$(basename "${QAT_DRIVER_DOWNLOAD_URL}")"
+CACHE_FILE="${QAT_INSTALL_DIR_CONTAINER}/.cache"
 
 BIN_LIST="qat_c3xxx.bin qat_c3xxx_mmp.bin qat_c62x.bin \
         qat_c62x_mmp.bin qat_mmp.bin qat_d15xx.bin qat_d15xx_mmp.bin \
@@ -186,46 +187,47 @@ qat_service_install() {
     info "Creating module.dep file for QAT released kernel object"
     info "This will take a few moments"
     depmod -a -b "${ROOT_MOUNT_DIR}" -C "${ROOT_MOUNT_DIR}/etc/depmod.d"
+
+    #
+    # The portions of qat-driver-install that deal with rc.d are
+    # removed: they are intended to be handled by the deployed
+    # DaemonSet.  The rest is contained in qat_service_start.
+    #
+    # The checks for loaded modules are moved to check_started.
+    #
+    popd
+}
+
+qat_service_start() {
     if [[ $(lsmod | grep "usdm_drv" | wc -l) != "0" ]]; then
         rmmod usdm_drv
     fi
-    if [[ -e ${ROOT_MOUNT_DIR}/sbin/chkconfig ]]; then
-        chroot "${ROOT_MOUNT_DIR}" /sbin/chkconfig --add qat_service
-    elif [[ -e ${ROOT_MOUNT_DIR}/usr/sbin/update-rc.d ]]; then
-        chroot "${ROOT_MOUNT_DIR}" /usr/sbin/update-rc.d qat_service defaults
-    fi
+
     info "Starting QAT service"
     chroot "${ROOT_MOUNT_DIR}" /etc/init.d/qat_service shutdown || true
     sleep 3
     chroot "${ROOT_MOUNT_DIR}" /etc/init.d/qat_service start
-    if [[ $(lsmod |egrep -c "usdm_drv") == "0" ]]; then
-        error "usdm_drv module not installed"
-    fi
-    if [[ ${numDh895xDevicesP} != 0 ]]; then
-        if [[ $(lsmod |egrep -c "qat_dh895xcc") == "0" ]]; then
-            error "qat_dh895xcc module not installed"
-        fi
-    fi
-    if [[ ${numC62xDevicesP} != 0 ]]; then
-        if [[ $(lsmod |egrep -c "qat_c62x") == "0" ]]; then
-            error "qat_c62x module not installed"
-        fi
-    fi
-    if [[ ${numD15xxDevicesP} != 0 ]]; then
-        if [[ $(lsmod |egrep -c "qat_d15xx") == "0" ]]; then
-            error "qat_d15xx module not installed"
-        fi
-    fi
-    if [[ ${numC3xxxDevicesP} != 0 ]]; then
-        if [[ $(lsmod |egrep -c "qat_c3xxx") == "0" ]]; then
-            error "qat_c3xxx module not installed"
-        fi
-    fi
-    if [[ $(${ROOT_MOUNT_DIR}/usr/local/bin/adf_ctl status | grep -c "state: down") != "0" ]]; then
-        error "QAT driver not activated"
-    fi
+}
 
-    popd
+qat_service_shutdown() {
+    info "Stopping QAT service"
+    if [[ $(lsmod | grep "qat" | wc -l) != "0" ||
+          -e ${ROOT_MOUNT_DIR}/lib/modules/$(uname -r)/updates/drivers/crypto/qat/qat_common/intel_qat.ko ]]; then
+
+        if [[ $(lsmod | grep "usdm_drv" | wc -l) != "0" ]]; then
+            rmmod usdm_drv
+        fi
+
+        if [ -e ${ROOT_MOUNT_DIR}/etc/init.d/qat_service_upstream ]; then
+            until chroot "${ROOT_MOUNT_DIR}" /etc/init.d/qat_service_upstream shutdown; do
+                sleep 1
+            done
+        elif [[ -e ${ROOT_MOUNT_DIR}/etc/init.d/qat_service ]]; then
+            until chroot "${ROOT_MOUNT_DIR}" /etc/init.d/qat_service shutdown; do
+                sleep 1
+            done
+        fi
+    fi
 }
 
 qat_service_uninstall() {
@@ -245,30 +247,10 @@ qat_service_uninstall() {
             rm ${ROOT_MOUNT_DIR}/lib/firmware/qat_fw_backup
         fi
 
-        if [[ $(lsmod | grep "usdm_drv" | wc -l) != "0" ]]; then
-            rmmod usdm_drv
-        fi
-
         if [ -e ${ROOT_MOUNT_DIR}/etc/init.d/qat_service_upstream ]; then
-            until ${ROOT_MOUNT_DIR}/etc/init.d/qat_service_upstream shutdown; do
-                sleep 1
-            done
-            if [[ -e ${ROOT_MOUNT_DIR}/sbin/chkconfig ]]; then
-                chroot "${ROOT_MOUNT_DIR}" /sbin/chkconfig --del qat_service_upstream
-            elif [[ -e ${ROOT_MOUNT_DIR}/usr/sbin/update-rc.d ]]; then
-                chroot "${ROOT_MOUNT_DIR}" /usr/sbin/update-rc.d -f qat_service_upstream remove
-            fi
             rm ${ROOT_MOUNT_DIR}/etc/init.d/qat_service_upstream
             rm ${ROOT_MOUNT_DIR}/usr/local/bin/adf_ctl
         elif [[ -e ${ROOT_MOUNT_DIR}/etc/init.d/qat_service ]]; then
-            until ${ROOT_MOUNT_DIR}/etc/init.d/qat_service shutdown; do
-                sleep 1
-            done
-            if [[ -e ${ROOT_MOUNT_DIR}/sbin/chkconfig ]]; then
-                chroot "${ROOT_MOUNT_DIR}" /sbin/chkconfig --del qat_service
-            elif [[ -e /usr/sbin/update-rc.d ]]; then
-                chroot "${ROOT_MOUNT_DIR}" /usr/sbin/update-rc.d -f qat_service remove
-            fi
             rm ${ROOT_MOUNT_DIR}/etc/init.d/qat_service
             rm ${ROOT_MOUNT_DIR}/usr/local/bin/adf_ctl
         fi
@@ -335,39 +317,102 @@ qat_service_uninstall() {
             lsmod | grep qat_c3xxxvf >/dev/null 2>&1 || modprobe -b -q qat_c3xxxvf >/dev/null 2>&1 || true
         fi
     else
-        error "Acceleration package not installed"
+        info "Acceleration package not installed"
     fi
 }
 
-configure_qat_installation() {
+install_qat() {
+    download_kernel_src
+    download_qat_src
+    configure_kernel_src
+    build_qat_src
     qat_driver_install
     adf_ctl_install
     qat_service_install
 }
 
-main() {
-    load_etc_os_release
-    # TODO install, start, stop, uninstall
+uninstall_qat() {
+    qat_service_shutdown
+    qat_service_uninstall
+}
 
-    case $1 in
-        install)
-            download_kernel_src
-            download_qat_src
-            configure_kernel_src
-            build_qat_src
-            configure_qat_installation
-            ;;
-        uninstall)
-            qat_service_uninstall
-            ;;
-        *)
-            download_kernel_src
-            download_qat_src
-            configure_kernel_src
-            build_qat_src
-            configure_qat_installation
-            ;;
-    esac
+check_cached_version() {
+    info "Checking cached version"
+    if [[ ! -f "${CACHE_FILE}" ]]; then
+        info "Cache file ${CACHE_FILE} not found"
+        return ${RETCODE_ERROR}
+    fi
+    # Source the cache file and check if the cached driver matches
+    # currently running kernel and driver versions.
+    . "${CACHE_FILE}"
+    if [[ "$(uname -r)" == "${CACHE_KERNEL_VERSION}" ]]; then
+        if [[ "${QAT_DRIVER_VERSION}" == "${CACHE_QAT_DRIVER_VERSION}" ]]; then
+            info "Found existing driver installation for kernel version $(uname -r) and driver version ${QAT_DRIVER_VERSION}"
+            return ${RETCODE_SUCCESS}
+        fi
+    fi
+    return ${RETCODE_ERROR}
+}
+
+update_cached_version() {
+    cat >"${CACHE_FILE}"<<__EOF__
+CACHE_KERNEL_VERSION=$(uname -r)
+CACHE_QAT_DRIVER_VERSION=${QAT_DRIVER_VERSION}
+__EOF__
+
+    info "Updated cached version as:"
+    cat "${CACHE_FILE}"
+}
+
+upgrade_driver() {
+    uninstall_qat
+    install_qat
+}
+
+uninstall_driver() {
+    uninstall_qat
+    rm "${CACHE_FILE}"
+}
+
+check_driver_started() {
+    if [[ $(lsmod |egrep -c "usdm_drv") == "0" ]]; then
+        error "usdm_drv module not installed"
+        return ${RETCODE_ERROR}
+    fi
+    if [[ ${numDh895xDevicesP} != 0 ]]; then
+        if [[ $(lsmod |egrep -c "qat_dh895xcc") == "0" ]]; then
+            error "qat_dh895xcc module not installed"
+            return ${RETCODE_ERROR}
+        fi
+    fi
+    if [[ ${numC62xDevicesP} != 0 ]]; then
+        if [[ $(lsmod |egrep -c "qat_c62x") == "0" ]]; then
+            error "qat_c62x module not installed"
+            return ${RETCODE_ERROR}
+        fi
+    fi
+    if [[ ${numD15xxDevicesP} != 0 ]]; then
+        if [[ $(lsmod |egrep -c "qat_d15xx") == "0" ]]; then
+            error "qat_d15xx module not installed"
+            return ${RETCODE_ERROR}
+        fi
+    fi
+    if [[ ${numC3xxxDevicesP} != 0 ]]; then
+        if [[ $(lsmod |egrep -c "qat_c3xxx") == "0" ]]; then
+            error "qat_c3xxx module not installed"
+            return ${RETCODE_ERROR}
+        fi
+    fi
+    if [[ $(${ROOT_MOUNT_DIR}/usr/local/bin/adf_ctl status | grep -c "state: down") != "0" ]]; then
+        error "QAT driver not activated"
+        return ${RETCODE_ERROR}
+    fi
+    return ${RETCODE_SUCCESS}
+}
+
+start_driver() {
+    qat_service_start
+    check_driver_started
 }
 
 main "$@"
