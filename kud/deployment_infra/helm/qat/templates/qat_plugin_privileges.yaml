@@ -35,7 +35,7 @@ spec:
         securityContext:
           readOnlyRootFilesystem: true
           privileged: true
-        image: intel/intel-qat-plugin:devel
+        image: integratedcloudnative/intel-qat-plugin:0.15.0
         imagePullPolicy: IfNotPresent
         args: ["-mode", "kernel"]
         volumeMounts:
