@@ -13,22 +13,14 @@ spec:
       labels:
         app: intel-qat-kernel-plugin
     spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: feature.node.kubernetes.io/pci-0b40_8086.present
-                operator: In
-                values:
-                - "true"
       containers:
       - name: intel-qat-kernel-plugin
         securityContext:
+          readOnlyRootFilesystem: true
           privileged: true
-        image: integratedcloudnative/intel-qat-plugin:0.15.0
+        image: intel/intel-qat-plugin:devel
         imagePullPolicy: IfNotPresent
-        command: ["/usr/local/bin/intel_qat_device_plugin", "-mode", "kernel"]
+        args: ["-mode", "kernel"]
         volumeMounts:
         - name: devfs
           mountPath: /dev
