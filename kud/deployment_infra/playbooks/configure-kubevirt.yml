@@ -1,0 +1,46 @@
+---
+# SPDX-license-identifier: Apache-2.0
+##############################################################################
+# Copyright (c) 2021
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Apache License, Version 2.0
+# which accompanies this distribution, and is available at
+# http://www.apache.org/licenses/LICENSE-2.0
+##############################################################################
+- hosts: localhost
+  pre_tasks:
+    - name: Load kud variables
+      include_vars:
+        file: kud-vars.yml
+  tasks:
+    - name: create kubevirt namespace
+      shell: "/usr/local/bin/kubectl create namespace kubevirt --dry-run=client -o yaml | kubectl apply -f -"
+    - name: check if nesting is available
+      stat:
+        path: /dev/kvm
+      register: kvm_stat_result
+    - name: configure emulation when nesting is not available
+      shell: "/usr/local/bin/kubectl create configmap -n kubevirt kubevirt-config --from-literal debug.useEmulation=true --dry-run -o yaml | /usr/local/bin/kubectl apply -f -"
+      when: not kvm_stat_result.stat.exists
+    - name: deploy operator
+      block:
+      - name: deploy operator | kubevirt-operator.yaml
+        shell: "/usr/local/bin/kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/{{ kubevirt_version }}/kubevirt-operator.yaml"
+      - name: deploy operator | kubevirt-cr.yaml
+        shell: "/usr/local/bin/kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/{{ kubevirt_version }}/kubevirt-cr.yaml"
+    - name: wait for deployment complete
+      shell: "/usr/local/bin/kubectl wait --timeout=180s --for=condition=Available -n kubevirt kv/kubevirt"
+    - name: deploy operator
+      block:
+      - name: deploy operator | cdi-operator.yaml
+        shell: "/usr/local/bin/kubectl apply -f https://github.com/kubevirt/containerized-data-importer/releases/download/{{ cdi_version }}/cdi-operator.yaml"
+      - name: deploy operator | cdi-cr.yaml
+        shell: "/usr/local/bin/kubectl apply -f https://github.com/kubevirt/containerized-data-importer/releases/download/{{ cdi_version }}/cdi-cr.yaml"
+    - name: wait for deployment complete
+      shell: "/usr/local/bin/kubectl wait --timeout=180s --for=condition=Available -n cdi cdi/cdi"
+    - name: install virtctl as kubectl plugin
+      become: yes
+      get_url:
+        url: "https://github.com/kubevirt/kubevirt/releases/download/{{ kubevirt_version }}/virtctl-{{ kubevirt_version }}-linux-amd64"
+        dest: "/usr/local/bin/kubectl-virt"
+        mode: 0755

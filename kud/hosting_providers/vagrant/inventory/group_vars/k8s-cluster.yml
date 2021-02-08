@@ -84,10 +84,16 @@ podsecuritypolicy_enabled: true
 #   allowedCapabilities:
 #     - '*'
 # by
+#  allowedCapabilities:
+#    - NET_ADMIN
+#    - SYS_NICE
 #   requiredDropCapabilities:
 #    - NET_RAW
 podsecuritypolicy_restricted_spec:
   privileged: true
+  allowedCapabilities:
+    - NET_ADMIN
+    - SYS_NICE
   allowPrivilegeEscalation: true
   volumes:
     - '*'
