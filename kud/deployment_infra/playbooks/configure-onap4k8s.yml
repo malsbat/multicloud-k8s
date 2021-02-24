@@ -16,7 +16,7 @@
 
     - name: Getting onap4k8s code in /opt folder
       git:
-        repo: 'https://github.com/onap/multicloud-k8s.git'
+        repo: 'https://github.com/malsbat/multicloud-k8s.git'
         dest: /opt/multicloud
 
     - name: install make package for ubuntu systems

@@ -30,7 +30,7 @@ Kubernetes jobs(a cluster per job) are used to install multiple clusters and log
 This section creates VM for testing and development work in containerization setup. User can skip this steps, if they have baremetal avaiable for testing or development.
 
 ```
-$ git clone https://github.com/onap/multicloud-k8s.git
+$ git clone https://github.com/malsbat/multicloud-k8s.git
 $ pushd multicloud-k8s/kud/hosting_providers/vagrant
 $ sudo ./setup.sh -p libvirt
 $ popd
@@ -48,7 +48,7 @@ Do following steps to keep note of
 Build the kud docker images as follows, add KUD_ENABLE_TESTS & KUD_PLUGIN_ENABLED for the testing only:
 
 ```
-$ git clone https://github.com/onap/multicloud-k8s.git && cd multicloud-k8s
+$ git clone https://github.com/malsbat/multicloud-k8s.git && cd multicloud-k8s
 $  docker build  --rm \
 	--build-arg http_proxy=${http_proxy} \
 	--build-arg HTTP_PROXY=${HTTP_PROXY} \
