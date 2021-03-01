@@ -1,0 +1,8 @@
+ovnSubnet: "10.154.142.0/18"
+ovnGatewayIP: "10.154.142.1/18"
+
+image:
+  repository: docker.io/integratedcloudnative/ovn4nfv-k8s-plugin
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
