@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name:  {{ include "qat-device-plugin.fullname" . }}-installer
+  labels:
+    {{- include "qat-device-plugin.labels" . | nindent 4 }}
+    role: installer
+spec:
+  selector:
+    matchLabels:
+      {{- include "qat-device-plugin.selectorLabels" . | nindent 6 }}
+      role: installer
+  template:
+    metadata:
+      labels:
+        {{- include "qat-device-plugin.selectorLabels" . | nindent 8 }}
+        role: installer
+    spec:
+      hostPID: true
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - image: "{{ .Values.installer.image.repository }}:{{ .Values.installer.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.installer.image.pullPolicy }}
+          name: qat-driver-installer
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: qat-install-dir
+              mountPath: "/usr/local/qat"
+            - name: root-dir
+              mountPath: "/root"
+            - name: lib-modules-dir
+              mountPath: "/root/lib/modules"
+            - name: run-systemd-dir
+              mountPath: "/root/run/systemd/system"
+      containers:
+      - image: "gcr.io/google-containers/pause:3.2"
+        name: pause
+      volumes:
+        - name: qat-install-dir
+          hostPath:
+            path: "/opt/qat"
+        - name: root-dir
+          hostPath:
+            path: "/"
+        - name: lib-modules-dir
+          hostPath:
+            path: "/lib/modules"
+        - name: run-systemd-dir
+          hostPath:
+            path: "/run/systemd/system"
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

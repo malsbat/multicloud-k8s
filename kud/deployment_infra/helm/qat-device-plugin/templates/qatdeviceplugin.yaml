@@ -1,0 +1,19 @@
+apiVersion: deviceplugin.intel.com/v1
+kind: QatDevicePlugin
+metadata:
+  name:  {{ include "qat-device-plugin.fullname" . }}-plugin
+  labels:
+    {{- include "qat-device-plugin.labels" . | nindent 4 }}
+spec:
+  image: "{{ .Values.plugin.image.repository }}:{{ .Values.plugin.image.tag | default .Chart.AppVersion }}"
+  dpdkDriver: {{ .Values.dpdkDriver }}
+  {{- with .Values.kernelVfDriver }}
+  kernelVfDrivers:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  logLevel: {{ .Values.logLevel }}
+  maxNumDevices: {{ .Values.maxNumDevices }}
+  {{- with .Values.nodeSelector }}
+  nodeSelector:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}

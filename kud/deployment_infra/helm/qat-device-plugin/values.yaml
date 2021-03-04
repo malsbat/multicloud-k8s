@@ -1,0 +1,38 @@
+# dpdkDriver is a DPDK device driver for configuring the QAT device.
+dpdkDriver: vfio-pci
+# kernelVfDrivers is a list of VF device drivers for the QuickAssist devices in the system.
+kernelVfDrivers:
+  - c6xxvf
+# logLevel sets the plugin's log level.
+logLevel: 4
+# maxNumDevices is a maximum number of QAT devices to be provided to the QuickAssist device plugin
+maxNumDevices: 32
+
+imagePullSecrets: []
+
+plugin:
+  image:
+    repository: intel/intel-qat-plugin
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+
+installer:
+  image:
+    repository: integratedcloudnative/qat-driver-installer
+    pullPolicy: IfNotPresent
+    tag: latest
+
+nodeSelector:
+  feature.node.kubernetes.io/qat-c6xx: "true"
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext:
+  privileged: true
+
+resources: {}
+
+affinity: {}
+
+tolerations: {}
