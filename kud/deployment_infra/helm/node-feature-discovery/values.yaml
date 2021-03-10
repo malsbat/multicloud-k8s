@@ -72,6 +72,32 @@ master:
 worker:
   configmapName: nfd-worker-conf
   config: |
+    sources:
+      custom:
+        - name: "qat-dh895xcc"
+          matchOn:
+            - pciId:
+                class: ["0b40"]
+                vendor: ["8086"]
+                device: ["0435"]
+        - name: "qat-c6xx"
+          matchOn:
+            - pciId:
+                class: ["0b40"]
+                vendor: ["8086"]
+                device: ["37c8"]
+        - name: "qat-d15xx"
+          matchOn:
+            - pciId:
+                class: ["0b40"]
+                vendor: ["8086"]
+                device: ["6f54"]
+        - name: "qat-c3xxx"
+          matchOn:
+            - pciId:
+                class: ["0b40"]
+                vendor: ["8086"]
+                device: ["19e2"]
     #sources:
     #  cpu:
     #    cpuid:

@@ -23,7 +23,8 @@ installer:
     tag: latest
 
 nodeSelector:
-  feature.node.kubernetes.io/qat-c6xx: "true"
+  feature.node.kubernetes.io/iommu-enabled: "true"
+  feature.node.kubernetes.io/custom-qat-c6xx: "true"
 
 podSecurityContext: {}
   # fsGroup: 2000
