@@ -1,0 +1,33 @@
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "intel-device-plugins.fullname" . }}-manager-rolebinding
+  labels:
+    {{- include "intel-device-plugins.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "intel-device-plugins.fullname" . }}-manager-role
+subjects:
+- kind: ServiceAccount
+  name: {{ include "intel-device-plugins.serviceAccountName" . }}
+  namespace: {{ $.Release.Namespace }}
+{{- if .Values.authProxy.enabled }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "intel-device-plugins.fullname" . }}-proxy-rolebinding
+  labels:
+    {{- include "intel-device-plugins.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "intel-device-plugins.fullname" . }}-proxy-role
+subjects:
+- kind: ServiceAccount
+  name: {{ include "intel-device-plugins.serviceAccountName" . }}
+  namespace: {{ $.Release.Namespace }}
+{{- end }}
+{{- end }}

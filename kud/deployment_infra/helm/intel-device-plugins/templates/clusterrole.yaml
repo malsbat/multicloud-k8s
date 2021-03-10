@@ -1,0 +1,168 @@
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: {{ include "intel-device-plugins.fullname" . }}-manager-role
+  labels:
+    {{- include "intel-device-plugins.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - daemonsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+- apiGroups:
+  - coordination.k8s.io
+  resourceNames:
+  - d1c7b6d5.intel.com
+  resources:
+  - leases
+  verbs:
+  - get
+  - update
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - fpgadeviceplugins
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - fpgadeviceplugins/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - gpudeviceplugins
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - gpudeviceplugins/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - qatdeviceplugins
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - qatdeviceplugins/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - sgxdeviceplugins
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - sgxdeviceplugins/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - fpga.intel.com
+  resources:
+  - acceleratorfunctions
+  - fpgaregions
+  verbs:
+  - get
+  - list
+  - watch
+{{- if .Values.authProxy.enabled }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "intel-device-plugins.fullname" . }}-proxy-role
+  labels:
+    {{- include "intel-device-plugins.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: {{ include "intel-device-plugins.fullname" . }}-metrics-reader
+  labels:
+    {{- include "intel-device-plugins.labels" . | nindent 4 }}
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+{{- end }}
+{{- end }}

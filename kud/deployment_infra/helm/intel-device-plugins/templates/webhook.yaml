@@ -1,0 +1,259 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: {{ $.Release.Namespace }}/{{ include "intel-device-plugins.certName" . }}
+  creationTimestamp: null
+  name: {{ include "intel-device-plugins.fullname" . }}-mutating-webhook-configuration
+  labels:
+    {{- include "intel-device-plugins.labels" . | nindent 4 }}
+webhooks:
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: {{ include "intel-device-plugins.webhook.serviceName" . }}
+      namespace: {{ $.Release.Namespace }}
+      path: /mutate-deviceplugin-intel-com-v1-fpgadeviceplugin
+  failurePolicy: Fail
+  name: mfpgadeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - fpgadeviceplugins
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: {{ include "intel-device-plugins.webhook.serviceName" . }}
+      namespace: {{ $.Release.Namespace }}
+      path: /mutate-deviceplugin-intel-com-v1-gpudeviceplugin
+  failurePolicy: Fail
+  name: mgpudeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - gpudeviceplugins
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: {{ include "intel-device-plugins.webhook.serviceName" . }}
+      namespace: {{ $.Release.Namespace }}
+      path: /mutate-deviceplugin-intel-com-v1-qatdeviceplugin
+  failurePolicy: Fail
+  name: mqatdeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - qatdeviceplugins
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: {{ include "intel-device-plugins.webhook.serviceName" . }}
+      namespace: {{ $.Release.Namespace }}
+      path: /mutate-deviceplugin-intel-com-v1-sgxdeviceplugin
+  failurePolicy: Fail
+  name: msgxdeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - sgxdeviceplugins
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: {{ include "intel-device-plugins.webhook.serviceName" . }}
+      namespace: {{ $.Release.Namespace }}
+      path: /pods
+  failurePolicy: Ignore
+  name: fpga.mutator.webhooks.intel.com
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - pods
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: {{ include "intel-device-plugins.webhook.serviceName" . }}
+      namespace: {{ $.Release.Namespace }}
+      path: /pods-sgx
+  failurePolicy: Ignore
+  name: sgx.mutator.webhooks.intel.com
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - pods
+  sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "intel-device-plugins.certName" . }}
+  creationTimestamp: null
+  name: {{ include "intel-device-plugins.fullname" . }}-validating-webhook-configuration
+  labels:
+    {{- include "intel-device-plugins.labels" . | nindent 4 }}
+webhooks:
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: {{ include "intel-device-plugins.webhook.serviceName" . }}
+      namespace: {{ $.Release.Namespace }}
+      path: /validate-deviceplugin-intel-com-v1-fpgadeviceplugin
+  failurePolicy: Fail
+  name: vfpgadeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - fpgadeviceplugins
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: {{ include "intel-device-plugins.webhook.serviceName" . }}
+      namespace: {{ $.Release.Namespace }}
+      path: /validate-deviceplugin-intel-com-v1-gpudeviceplugin
+  failurePolicy: Fail
+  name: vgpudeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - gpudeviceplugins
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: {{ include "intel-device-plugins.webhook.serviceName" . }}
+      namespace: {{ $.Release.Namespace }}
+      path: /validate-deviceplugin-intel-com-v1-qatdeviceplugin
+  failurePolicy: Fail
+  name: vqatdeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - qatdeviceplugins
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: {{ include "intel-device-plugins.webhook.serviceName" . }}
+      namespace: {{ $.Release.Namespace }}
+      path: /validate-deviceplugin-intel-com-v1-sgxdeviceplugin
+  failurePolicy: Fail
+  name: vsgxdeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - sgxdeviceplugins
+  sideEffects: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "intel-device-plugins.webhook.serviceName" . }}
+  labels:
+    {{- include "intel-device-plugins.labels" . | nindent 4 }}
+spec:
+  ports:
+  - port: 443
+    targetPort: 9443
+  selector:
+    {{- include "intel-device-plugins.selectorLabels" . | nindent 4 }}
+    control-plane: controller-manager
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "intel-device-plugins.certName" . }}
+  labels:
+    {{- include "intel-device-plugins.labels" . | nindent 4 }}
+spec:
+  dnsNames:
+  - {{ include "intel-device-plugins.webhook.serviceName" . }}.{{ $.Release.Namespace }}.svc
+  - {{ include "intel-device-plugins.webhook.serviceName" . }}.{{ $.Release.Namespace }}.svc.{{ .Values.clusterDomain }}
+  issuerRef:
+    kind: Issuer
+    name: {{ include "intel-device-plugins.fullname" . }}-selfsigned-issuer
+  secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "intel-device-plugins.fullname" . }}-selfsigned-issuer
+  labels:
+    {{- include "intel-device-plugins.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}

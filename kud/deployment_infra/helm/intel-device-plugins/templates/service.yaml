@@ -1,0 +1,17 @@
+{{- if .Values.authProxy.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    {{- include "intel-device-plugins.labels" . | nindent 4 }}
+    control-plane: controller-manager
+  name: {{ include "intel-device-plugins.fullname" . }}-controller-manager-metrics-service
+spec:
+  ports:
+  - name: https
+    port: {{ .Values.authProxy.service.port }}
+    targetPort: https
+  selector:
+    {{- include "intel-device-plugins.selectorLabels" . | nindent 4 }}
+    control-plane: controller-manager
+{{- end }}

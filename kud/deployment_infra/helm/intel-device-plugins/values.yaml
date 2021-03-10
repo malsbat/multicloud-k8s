@@ -1,0 +1,90 @@
+imagePullSecrets: []
+
+clusterDomain: cluster.local
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 1
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+# Protect the /metrics endpoint by putting it behind auth.
+authProxy:
+  # If you want your controller-manager to expose the /metrics
+  # endpoint w/o any authn/z, set enabled to false.
+  enabled: true
+
+  image:
+    repository: gcr.io/kubebuilder/kube-rbac-proxy
+    # This should be set to 'IfNotPresent' for released version
+    pullPolicy: IfNotPresent
+    # tag, if defined will use the given image tag, else Chart.AppVersion will be used
+    tag: v0.5.0
+
+  securityContext:
+    readOnlyRootFilesystem: true
+    runAsGroup: 1000
+    runAsNonRoot: true
+    runAsUser: 1000
+
+  service:
+    port: 8443
+
+  resources: {}
+
+webhook:
+  image:
+    repository: intel/intel-deviceplugin-operator
+    # This should be set to 'IfNotPresent' for released version
+    pullPolicy: IfNotPresent
+    # tag, if defined will use the given image tag, else Chart.AppVersion will be used
+    # tag
+
+  securityContext:
+    readOnlyRootFilesystem: true
+    runAsGroup: 3210
+    runAsNonRoot: true
+    runAsUser: 3210
+
+  service:
+    # If not set and create is true, a name is generated using the fullname template
+    name:
+
+  metricsAddr: "127.0.0.1:8080"
+
+  resources:
+    limits:
+      cpu: 100m
+      memory: 30Mi
+    requests:
+      cpu: 100m
+      memory: 20Mi
+
+nodeSelector: {}
+
+tolerations: {}
+
+annotations: {}
+
+affinity: {}
+
+## RBAC parameteres
+## https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+##
+rbac:
+  create: true
+
+certificate:
+  # If not set and create is true, a name is generated using the fullname template
+  name:

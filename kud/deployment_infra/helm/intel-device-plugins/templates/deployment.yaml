@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "intel-device-plugins.fullname" . }}-controller-manager
+  labels:
+    {{- include "intel-device-plugins.labels" . | nindent 4 }}
+    control-plane: controller-manager
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "intel-device-plugins.selectorLabels" . | nindent 6 }}
+      control-plane: controller-manager
+  template:
+    metadata:
+      labels:
+        {{- include "intel-device-plugins.selectorLabels" . | nindent 8 }}
+        control-plane: controller-manager
+      annotations:
+        {{- toYaml .Values.annotations | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "intel-device-plugins.serviceAccountName" . }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+{{- if .Values.authProxy.enabled }}
+      - name: kube-rbac-proxy
+        args:
+        - --secure-listen-address=0.0.0.0:{{ .Values.authProxy.service.port }}
+        - --upstream=http://{{ .Values.webhook.metricsAddr }}/
+        - --logtostderr=true
+        - --v=10
+        image: "{{ .Values.authProxy.image.repository }}:{{ .Values.authProxy.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.authProxy.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.authProxy.service.port }}
+          name: https
+        resources:
+          {{- toYaml .Values.authProxy.resources | nindent 10 }}
+        securityContext:
+          {{- toYaml .Values.authProxy.securityContext | nindent 10 }}
+{{- end }}
+      - name: manager
+{{- if .Values.authProxy.enabled }}
+        args:
+        - --metrics-addr={{ .Values.webhook.metricsAddr }}
+        - --enable-leader-election
+{{- end }}
+        image: "{{ .Values.webhook.image.repository }}:{{ .Values.webhook.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.webhook.image.pullPolicy }}
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        resources:
+          {{- toYaml .Values.webhook.resources | nindent 10 }}
+        securityContext:
+          {{- toYaml .Values.webhook.securityContext | nindent 10 }}
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
