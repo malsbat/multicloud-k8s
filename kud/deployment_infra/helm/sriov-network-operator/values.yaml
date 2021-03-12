@@ -1,0 +1,7 @@
+image:
+  repository: quay.io/openshift/origin-sriov-network-operator
+  # This should be set to 'IfNotPresent' for released version
+  pullPolicy: IfNotPresent
+  # tag, if defined will use the given image tag, else Chart.AppVersion will be used
+  # tag
+imagePullSecrets: []
